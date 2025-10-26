@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kuberisc-gateway
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kuberisc-gateway
+  template:
+    metadata:
+      labels:
+        app: kuberisc-gateway
+    spec:
+      serviceAccountName: kuberisc-gateway
+      containers:
+        - name: gateway
+          image: ghcr.io/wangqihao-charlie/kuberisc-gateway:latest
+          imagePullPolicy: Always
+          resources:
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+            requests:
+              cpu: "200m"
+              memory: "256Mi"
+          env:
+            - name: GATEWAY_NAMESPACE
+              valueFrom:
+                fieldRef: { fieldPath: metadata.namespace }
+            - name: INSTRUCTIONSET_NAME
+              value: "wasmtime"
+            - name: INSTRUCTION_NAME
+              value: "run"
+            - name: RUNTIME
+              value: "exec"
+            - name: AGENT_POD_SELECTOR
+              value: "app=kuberisc-agent"
+            - name: WATCH_GRACE
+              value: "500ms"
+          ports:
+            - name: http
+              containerPort: 8080
+          args:
+            - --addr=:8080
